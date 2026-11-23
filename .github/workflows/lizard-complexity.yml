@@ -1,0 +1,39 @@
+name: Complexity Audit (Lizard)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  lizard-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Lizard
+        run: pip install lizard
+
+      - name: Run Lizard complexity analysis
+        run: |
+          mkdir -p reports
+          lizard src/main/java -l java -CCN 15 -w > reports/lizard-warnings.txt || true
+          lizard src/main/java -l java > reports/lizard-report.txt
+          cat reports/lizard-report.txt
+
+      - name: Upload Lizard report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lizard-complexity-report
+          path: reports/
+          if-no-files-found: error
