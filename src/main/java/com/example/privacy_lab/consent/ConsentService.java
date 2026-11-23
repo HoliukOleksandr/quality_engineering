@@ -69,6 +69,7 @@ public class ConsentService {
         Instant now = Instant.now();
         UserConsent c = existing.get();
         c.setGranted(false);
+        c.setGrantedAt(null); // симуляція помилкової мутації стану (FAIL)
         c.setWithdrawnAt(now);
         c.setUpdatedAt(now);
         c.setSource(source);
