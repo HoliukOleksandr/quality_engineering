@@ -58,25 +58,24 @@ public class ConsentService {
 
     @Transactional
     public Result revoke(long userId, ConsentPurpose purpose, String source) {
-        Optional<UserConsent> existing = consents.findByUserIdAndPurpose(userId, purpose);
+        ConsentKey key = new ConsentKey(userId, purpose);
+        Optional<UserConsent> existing = consents.findByUserIdAndPurpose(key.userId(), key.purpose());
 
-        // Нічого відкликати: не створюємо жодних суперечливих записів
         if (existing.isEmpty() || !existing.get().isGranted()) {
-            log.info("CONSENT op=REVOKE user={} purpose={} result=ALREADY_REVOKED", userId, purpose);
+            log.info("CONSENT op=REVOKE user={} purpose={} result=ALREADY_REVOKED", key.userId(), key.purpose());
             return Result.ALREADY_REVOKED;
         }
 
-        Instant now = Instant.now();
         UserConsent c = existing.get();
+        Instant now = Instant.now();
         c.setGranted(false);
-        c.setGrantedAt(null); // симуляція помилкової мутації стану (FAIL)
         c.setWithdrawnAt(now);
         c.setUpdatedAt(now);
         c.setSource(source);
         consents.save(c);
 
-        record(userId, purpose, "REVOKE", source);
-        log.info("CONSENT op=REVOKE user={} purpose={} result=REVOKED", userId, purpose);
+        record(key.userId(), key.purpose(), "REVOKE", source);
+        log.info("CONSENT op=REVOKE user={} purpose={} result=REVOKED", key.userId(), key.purpose());
         return Result.REVOKED;
     }
 
